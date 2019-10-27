@@ -20,14 +20,13 @@ bPts = deque([0] * 512, maxlen=1000000000)
 pPts = deque([0] * 512, maxlen=1000000000)
 kPts = deque([0] * 512, maxlen=1000000000)
 
-#red, orange, yellow, green, blue, purple, pink
-#i have RGB
-#it goes BGR
+# red, orange, yellow, green, blue, purple, pink
+# i have RGB
+# it goes BGR
 colors = [(38, 38, 255), (19, 148, 249), (17, 250, 250), (17, 250, 48), (255, 207, 47), (255, 47, 165), (248, 107, 253)]
 colorIndx = 0
 
-
-while(1):
+while (1):
 
     _, frame = cap.read()
     flippedIMG = cv.flip(frame, 0)
@@ -44,32 +43,32 @@ while(1):
     ret, thresh = cv.threshold(dilate, 15, 275, cv.THRESH_BINARY)
 
     contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-    #parameters: input, contours to be passed in, draw all contours (-1) or index to a specific one, color, thickness
+    # parameters: input, contours to be passed in, draw all contours (-1) or index to a specific one, color, thickness
     img = cv.drawContours(frame, contours, -1, (0, 255, 0), 3)
-    
-     #drawing the colors to choose from
 
-    #clear
+    # drawing the colors to choose from
+
+    # clear
     img = cv.rectangle(frame, (0, 60), (80, 90), (255, 255, 255), -1)
-    #red
+    # red
     img = cv.rectangle(frame, (80, 60), (160, 90), colors[0], -1)
-    #orange
+    # orange
     img = cv.rectangle(frame, (160, 60), (240, 90), colors[1], -1)
-    #yellow
+    # yellow
     img = cv.rectangle(frame, (240, 60), (320, 90), colors[2], -1)
-    #green
+    # green
     img = cv.rectangle(frame, (320, 60), (400, 90), colors[3], -1)
-    #blue
+    # blue
     img = cv.rectangle(frame, (400, 60), (480, 90), colors[4], -1)
-    #purple
+    # purple
     img = cv.rectangle(frame, (480, 60), (560, 90), colors[5], -1)
-    #pink
+    # pink
     img = cv.rectangle(frame, (560, 60), (640, 90), colors[6], -1)
 
     if len(contours) > 0:
 
         M = cv.moments(thresh)
- 
+
         if (M['m00'] > 0):
 
             # calculate x,y coordinate of center
@@ -79,11 +78,11 @@ while(1):
             cX, cY = 700, 700
         # put text and highlight the center
         cv.circle(frame, (cX, cY), 5, (255, 255, 255), -1)
-        #cv.putText(frame, "centroid", (cX - 60, cY - 60),cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        # cv.putText(frame, "centroid", (cX - 60, cY - 60),cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
         center = cX, cY
 
-        if(cY <= 90):
+        if (cY <= 90):
             if 0 <= cX <= 80:
                 redIndx = 0
                 orangeIndx = 0
@@ -102,19 +101,19 @@ while(1):
                 kPts = deque(maxlen=1000000000)
 
             elif 80 <= cX <= 160:
-                colorIndx = 0 #Red
+                colorIndx = 0  # Red
             elif 160 <= cX <= 240:
-                colorIndx = 1 #Orange
+                colorIndx = 1  # Orange
             elif 240 <= cX <= 320:
-                colorIndx = 2 #yellow
+                colorIndx = 2  # yellow
             elif 320 <= cX <= 400:
-                colorIndx = 3 #Green
+                colorIndx = 3  # Green
             elif 400 <= cX <= 480:
-                colorIndx = 4 #Blue
+                colorIndx = 4  # Blue
             elif 480 <= cX <= 560:
-                colorIndx = 5 #Purple
+                colorIndx = 5  # Purple
             elif 560 <= cX <= 640:
-                colorIndx = 6 #pink
+                colorIndx = 6  # pink
         else:
             if colorIndx == 0:
                 rPts[redIndx].appendleft(center)
@@ -152,16 +151,11 @@ while(1):
         kPts.append(deque(maxlen=1000000000))
         pinkIndx += 1
 
-    
     points = [rPts, oPts, yPts, gPts, bPts, pPts, kPts]
 
-
-
-      
-
     cv.imshow("Frame", frame)
-    #cv.imshow("hsv", hsv)
-    #cv.imshow("Mask", mask)
+    # cv.imshow("hsv", hsv)
+    # cv.imshow("Mask", mask)
 
     k = cv.waitKey(5) & 0xff
 
