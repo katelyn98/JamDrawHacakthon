@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Page Title</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    /* Style the body */
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: #3498db;
+}
+
+.button {
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #9b59b6;
+  border: none;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 30px 60px;
+  text-align: center;
+  text-decoration: none;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 16px;
+  margin: 20px;
+}
+
+/* Header/logo Title */
+.header {
+  padding: 45px;
+  text-align: center;
+  background: #1abc9c;
+  color: white;
+}
+/* Increase the font size of the heading */
+.header h1 {
+  font-size: 40px;
+}
+
+#test {
+    float: left;
+    margin-left: 60px;
+}
+
+#stopTest {
+    float: right;
+    margin-right: 60px;
+}
+
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Welcome to <b>JamDraw</b>!!!</h1>
+  <h3>Search for music by drawing</h3>
+</div>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+        $(function() {
+          $('a#test').bind('click', function() {
+            $.getJSON('/background_process_test',
+                function(data) {
+              //do nothing
+            });
+            return false;
+          });
+        });
+</script>
+
+<script type=text/javascript>
+        $(function() {
+          $('a#stopTest').bind('click', function() {
+            $.getJSON('/my_test',
+                function(data) {
+              //do nothing
+            });
+            return false;
+          });
+        });
+</script>
+
+
+<div class='container'>
+    <form>
+        <a href=# id=test><button class='button'>Start Drawin', dude</button></a>
+        <a href=# id=stopTest><button class='button'>Start Jammin', brah</button></a>
+    </form>
+
+</div>
+</body>
+</html>
