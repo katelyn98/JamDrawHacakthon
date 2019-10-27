@@ -47,7 +47,7 @@ def plot_colors2(hist, centroids):
         cv.rectangle(bar, (int(startX), 0), (int(endX), 50), color.astype("uint8").tolist(), -1)
         startX = endX
 
-    return bar
+    return bar, color, percent
 
 
 while(1):
@@ -80,7 +80,7 @@ while(1):
             for k in range(1, len(points[i][j])):
                 if points[i][j][k-1] is None or points[i][j][k] is None:
                     continue
-                img2 = cv.line(frame, points[i][j][k - 1], points[i][j][k], colors[i], 13)
+                img2 = cv.line(frame, points[i][j][k - 1], points[i][j][k], colors[i], 18)
 
     #clear
     img = cv.rectangle(frame, (0, 60), (80, 90), (255, 255, 255), -1)
@@ -147,17 +147,26 @@ while(1):
             if center[0] >= 570:
 
                 cv.imwrite('jamDrawImg.jpg', img2)
-                
 
                 drawing = cv.imread('jamDrawImg.jpg')
+                drawing = drawing[90:390, 0:700]
+                #cv.imwrite('cropped.jpg', crop_img)
+                #cv.imshow("cropped", crop_img)
                 drawing = cv.cvtColor(drawing, cv.COLOR_BGR2RGB)
 
                 drawing = drawing.reshape((drawing.shape[0] * drawing.shape[1], 3))
-                clt = KMeans(n_clusters=8)
+                clt = KMeans(n_clusters=3)
                 clt.fit(drawing)
 
                 hist = find_histogram(clt)
-                bar = plot_colors2(hist, clt.cluster_centers_)
+                bar, color, percent = plot_colors2(hist, clt.cluster_centers_)
+
+                print(color[0])
+                print(color[1])
+                print(color[2])
+                print(percent[0])
+                print(percent[1])
+                print(percent[2])
 
                 plt.axis("off")
                 plt.imshow(bar)
