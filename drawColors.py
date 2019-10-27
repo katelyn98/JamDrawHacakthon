@@ -1,6 +1,9 @@
 import cv2 as cv
 import numpy as np
 from collections import deque
+import copy
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
 
 cap = cv.VideoCapture(0)
 
@@ -18,7 +21,6 @@ greenPts = [deque(maxlen=1000)]
 bluePts = [deque(maxlen=1000)]
 purplePts = [deque(maxlen=1000)]
 
-
 redIndx = 0
 orangeIndx = 0
 yellowIndx = 0
@@ -26,9 +28,33 @@ greenIndx = 0
 blueIndx = 0
 purpleIndx = 0
 
+def find_histogram(clt):
+    numLabels = np.arange(0, len(np.unique(clt.labels_)) + 1)
+    (hist, _) = np.histogram(clt.labels_, bins=numLabels)
+
+    hist = hist.astype("float")
+    hist /= hist.sum()
+
+    return hist
+
+
+def plot_colors2(hist, centroids):
+    bar = np.zeros((50, 300, 3), dtype="uint8")
+    startX = 0
+
+    for(percent, color) in zip(hist, centroids):
+        endX = startX + (percent * 300)
+        cv.rectangle(bar, (int(startX), 0), (int(endX), 50), color.astype("uint8").tolist(), -1)
+        startX = endX
+
+    return bar, color, percent
+
+
 while(1):
 
     _, frame = cap.read()
+    jamDraw = frame.copy()
+    blackImg = np.zeros((512, 512, 3), np.uint8)
     flippedIMG = cv.flip(frame, 0)
     hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
@@ -48,6 +74,13 @@ while(1):
     center = None
     
     #drawing the colors to choose from
+    points = [redPts, orangePts, yellowPts, greenPts, bluePts, purplePts]
+    for i in range(len(points)):
+        for j in range(len(points[i])):
+            for k in range(1, len(points[i][j])):
+                if points[i][j][k-1] is None or points[i][j][k] is None:
+                    continue
+                img2 = cv.line(frame, points[i][j][k - 1], points[i][j][k], colors[i], 18)
 
     #clear
     img = cv.rectangle(frame, (0, 60), (80, 90), (255, 255, 255), -1)
@@ -63,6 +96,8 @@ while(1):
     img = cv.rectangle(frame, (400, 60), (480, 90), colors[4], -1)
     #purple
     img = cv.rectangle(frame, (480, 60), (560, 90), colors[5], -1)
+    #take picture
+    img = cv.rectangle(frame, (570, 390), (650, 420), (255, 255, 255), -1)
 
     if len(contours) > 0:
 
@@ -75,9 +110,8 @@ while(1):
             cY = int(M["m01"] / M["m00"])
         else:
             cX, cY = 700, 700
-        # put text and highlight the center
+
         cv.circle(frame, (cX, cY), 5, (255, 255, 255), -1)
-        #cv.putText(frame, "centroid", (cX - 60, cY - 60),cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
         center = cX, cY
 
@@ -109,7 +143,35 @@ while(1):
                 colorIndx = 4
             elif 480 <= center[0] <= 560:
                 colorIndx = 5
-        
+        elif center[1] >= 390:
+            if center[0] >= 570:
+
+                cv.imwrite('jamDrawImg.jpg', img2)
+
+                drawing = cv.imread('jamDrawImg.jpg')
+                drawing = drawing[90:390, 0:700]
+                #cv.imwrite('cropped.jpg', crop_img)
+                #cv.imshow("cropped", crop_img)
+                drawing = cv.cvtColor(drawing, cv.COLOR_BGR2RGB)
+
+                drawing = drawing.reshape((drawing.shape[0] * drawing.shape[1], 3))
+                clt = KMeans(n_clusters=3)
+                clt.fit(drawing)
+
+                hist = find_histogram(clt)
+                bar, color, percent = plot_colors2(hist, clt.cluster_centers_)
+
+                print(color[0])
+                print(color[1])
+                print(color[2])
+                print(percent[0])
+                print(percent[1])
+                print(percent[2])
+
+                plt.axis("off")
+                plt.imshow(bar)
+                plt.show()
+
         else:
             if colorIndx == 0:
                 redPts[redIndx].appendleft(center)
@@ -137,16 +199,6 @@ while(1):
         purplePts.append(deque(maxlen=1000))
         purpleIndx += 1
 
-
-    points = [redPts, orangePts, yellowPts, greenPts, bluePts, purplePts]
-    for i in range(len(points)):
-        for j in range(len(points[i])):
-            for k in range(1, len(points[i][j])):
-                if points[i][j][k-1] is None or points[i][j][k] is None:
-                    continue
-                cv.line(frame, points[i][j][k - 1], points[i][j][k], colors[i], 5)
-
-    
 
     cv.imshow("Frame", frame)
     #cv.imshow("hsv", hsv)
