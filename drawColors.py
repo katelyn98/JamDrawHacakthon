@@ -161,14 +161,26 @@ while(1):
                 hist = find_histogram(clt)
                 bar, color, percent = plot_colors2(hist, clt.cluster_centers_)
 
-                #print(hist)
-                danceability = hist[0]
-                valence = hist[1]
-                tempo = hist[2]
+                #print(colors[0])
+                #print(colors[1])
+                #print(colors[2])
 
-                #plt.axis("off")
-                #plt.imshow(bar)
-                #plt.show()
+                #print(hist)
+
+                val1 = hist[0]
+                val2 = hist[1]
+                val3 = hist[2]
+
+                a1 = min(val1, val2, val3)
+                a3 = max(val1, val2, val3)
+                a2 = (val1 + val2 + val3) - a1 - a3
+
+                ranks = ([a1, a2, a3])
+                #print(ranks)
+
+                plt.axis("off")
+                plt.imshow("Song Attributes", bar)
+                plt.show()
 
         else:
             if colorIndx == 0:
