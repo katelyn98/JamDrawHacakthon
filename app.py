@@ -1,16 +1,13 @@
-from flask import Flask, render_template
 import cv2 as cv
 import numpy as np
 from collections import deque
-
 import copy
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-app = Flask(__name__, template_folder='C:/Users/bgooder/PycharmProjects/JamDraw/templates', static_folder='C:/Users/bgooder/PycharmProjects/JamDraw/static')
-
-danceability = 0
-valence = 0
-tempo = 19
+from pathlib import Path
+import pandas as pd
+from flask import Flask, render_template
+app = Flask(__name__, template_folder='C:/Users/Katelyn/Desktop/DareMightyThings/JamDraw/templates', static_folder='C:/Users/Katelyn/Desktop/DareMightyThings/JamDraw/static')
 
 @app.route('/')
 def index():
@@ -25,21 +22,19 @@ def jam(songFile):
 def json():
     return render_template('json.html')
 
-@app.route('/my_test')
-def my_test():
-    print("Finishing")
-    cv.destroyAllWindows()
-    return "nothing"
-
 # //background process happening without any refreshing
-@app.route('/background_process_test')
-def background_process_test():
+@app.route('/main')
+def main():
     print("Starting")
     isRecording = True
+
     cap = cv.VideoCapture(0)
 
-    colors = [(38, 38, 255), (19, 148, 249), (17, 250, 250), (17, 250, 48), (255, 207, 47), (255, 47, 165),
-              (248, 107, 253)]
+    #red, orange, yellow, green, blue, purple, pink
+    #i have RGB
+    #it goes BGR
+    #colors = [(38, 38, 255)]
+    colors = [(38, 38, 255), (19, 148, 249), (17, 250, 250), (17, 250, 48), (255, 207, 47), (255, 47, 165), (248, 107, 253)]
     colorIndx = 0
 
     redPts = [deque(maxlen=1000)]
@@ -56,12 +51,31 @@ def background_process_test():
     blueIndx = 0
     purpleIndx = 0
 
-    while (isRecording):
+    def find_histogram(clt):
+        numLabels = np.arange(0, len(np.unique(clt.labels_)) + 1)
+        (hist, _) = np.histogram(clt.labels_, bins=numLabels)
+
+        hist = hist.astype("float")
+        hist /= hist.sum()
+
+        return hist
+
+
+    def plot_colors2(hist, centroids):
+        bar = np.zeros((50, 300, 3), dtype="uint8")
+        startX = 0
+
+        for(percent, color) in zip(hist, centroids):
+            endX = startX + (percent * 300)
+            cv.rectangle(bar, (int(startX), 0), (int(endX), 50), color.astype("uint8").tolist(), -1)
+            startX = endX
+
+        return bar, color, percent
+
+
+    while(isRecording):
 
         _, frame = cap.read()
-        jamDraw = frame.copy()
-        blackImg = np.zeros((512, 512, 3), np.uint8)
-        flippedIMG = cv.flip(frame, 0)
         hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
         lowerRed = np.array([90, 100, 100])
@@ -72,43 +86,44 @@ def background_process_test():
         kernel = np.ones((5, 5), np.uint8)
         dilate = cv.dilate(mask, kernel, iterations=2)
 
-        ret, thresh = cv.threshold(dilate, 15, 275, cv.THRESH_BINARY)
+        _, thresh = cv.threshold(dilate, 15, 275, cv.THRESH_BINARY)
 
-        contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        # parameters: input, contours to be passed in, draw all contours (-1) or index to a specific one, color, thickness
+        contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        #parameters: input, contours to be passed in, draw all contours (-1) or index to a specific one, color, thickness
         img = cv.drawContours(frame, contours, -1, (0, 255, 0), 3)
         center = None
-
-        # drawing the colors to choose from
+        #img2 = ""
+        
+        #drawing the colors to choose from
         points = [redPts, orangePts, yellowPts, greenPts, bluePts, purplePts]
         for i in range(len(points)):
             for j in range(len(points[i])):
                 for k in range(1, len(points[i][j])):
-                    if points[i][j][k - 1] is None or points[i][j][k] is None:
+                    if points[i][j][k-1] is None or points[i][j][k] is None:
                         continue
                     img2 = cv.line(frame, points[i][j][k - 1], points[i][j][k], colors[i], 23)
 
-        # clear
+        #clear
         img = cv.rectangle(frame, (0, 60), (80, 90), (255, 255, 255), -1)
-        # red
+        #red
         img = cv.rectangle(frame, (80, 60), (160, 90), colors[0], -1)
-        # orange
+        #orange
         img = cv.rectangle(frame, (160, 60), (240, 90), colors[1], -1)
-        # yellow
+        #yellow
         img = cv.rectangle(frame, (240, 60), (320, 90), colors[2], -1)
-        # green
+        #green
         img = cv.rectangle(frame, (320, 60), (400, 90), colors[3], -1)
-        # blue
+        #blue
         img = cv.rectangle(frame, (400, 60), (480, 90), colors[4], -1)
-        # purple
+        #purple
         img = cv.rectangle(frame, (480, 60), (560, 90), colors[5], -1)
-        # take picture
+        #take picture
         img = cv.rectangle(frame, (570, 390), (650, 420), (255, 255, 255), -1)
 
         if len(contours) > 0:
 
             M = cv.moments(thresh)
-
+    
             if (M['m00'] > 0):
 
                 # calculate x,y coordinate of center
@@ -151,12 +166,12 @@ def background_process_test():
                     colorIndx = 5
             elif center[1] >= 390:
                 if center[0] >= 570:
+
                     cv.imwrite('jamDrawImg.jpg', img2)
 
                     drawing = cv.imread('jamDrawImg.jpg')
                     drawing = drawing[90:390, 0:700]
-                    # cv.imwrite('cropped.jpg', crop_img)
-                    # cv.imshow("cropped", crop_img)
+                
                     drawing = cv.cvtColor(drawing, cv.COLOR_BGR2RGB)
 
                     drawing = drawing.reshape((drawing.shape[0] * drawing.shape[1], 3))
@@ -164,13 +179,8 @@ def background_process_test():
                     clt.fit(drawing)
 
                     hist = find_histogram(clt)
-                    bar, color, percent = plot_colors2(hist, clt.cluster_centers_)
+                    bar, _, _ = plot_colors2(hist, clt.cluster_centers_)
 
-                    # print(colors[0])
-                    # print(colors[1])
-                    # print(colors[2])
-
-                    # print(hist)
 
                     val1 = hist[0]
                     val2 = hist[1]
@@ -181,7 +191,31 @@ def background_process_test():
                     a2 = (val1 + val2 + val3) - a1 - a3
 
                     ranks = ([a1, a2, a3])
-                    # print(ranks)
+
+                    #tempo = ranks[0]
+                    #valence = ranks[1]
+                    dance = ranks[2]  
+
+                    print(dance)
+
+                    upperDance = dance + 0.002
+                    lowerDance = dance - 0.002  
+
+                    #upperValence = valence + 0.002
+                    #lowerValence = valence - 0.002
+
+                    #upperTempo = (tempo * 1000) + 10
+                    #lowerTempo = (tempo * 1000) - 10
+
+                    data_path = Path('.') / 'Data'
+                    data_files = list(data_path.glob("*.xlsx"))
+
+                    file = data_files[0]
+                    df = pd.read_excel(str(file))
+
+                    df_dance = df[(df.danceability >= lowerDance) & (df.danceability <= upperDance)]
+                    
+                    print(df_dance[0:1])
 
                     plt.axis("off")
                     plt.imshow(bar)
@@ -214,82 +248,16 @@ def background_process_test():
             purplePts.append(deque(maxlen=1000))
             purpleIndx += 1
 
+
         cv.imshow("Frame", frame)
-        # cv.imshow("hsv", hsv)
-        # cv.imshow("Mask", mask)
 
         k = cv.waitKey(5) & 0xff
 
         if k == 27:
             break
 
-    #-----------------------------JamDraw Territory-------------------------------
+    cv.destroyAllWindows()        
 
-    # Send 3 values (danceability, valence, tempo)
-    calculateSearchCriteria(danceability, valence, tempo)
-
-    print("Finishing")
-    cv.destroyAllWindows()
-    return "nothing"
-
-def calculateSearchCriteria(d, v, t):
-
-    # Danceability (0.0-1.0)
-    if d != 0:
-        d = d/100
-
-    # Valence (0.0-1.0)
-    if v != 0:
-        v = v/100
-
-    # Tempo (70-180)
-    if t <= 10:
-        t = 75
-    elif t <= 20:
-        t = 90
-    elif t <= 30:
-        t = 105
-    elif t <= 40:
-        t = 120
-    elif t <= 50:
-        t = 135
-    elif t <= 60:
-        t = 150
-    elif t <= 85:
-        t = 165
-    elif t <= 100:
-        t = 180
-
-    searchBillboardDataAndReturnSongRecommendations(d)
-
-def searchBillboardDataAndReturnSongRecommendations(danceability):
-    song = "Never Gonna Give You Up - Rick Astley"
-
-
-
-    print("Because your danceability score was " + str(danceability) + " we recommend that you listen to this song:  " + song)
-
-
-def find_histogram(clt):
-    numLabels = np.arange(0, len(np.unique(clt.labels_)) + 1)
-    (hist, _) = np.histogram(clt.labels_, bins=numLabels)
-
-    hist = hist.astype("float")
-    hist /= hist.sum()
-
-    return hist
-
-
-def plot_colors2(hist, centroids):
-    bar = np.zeros((50, 300, 3), dtype="uint8")
-    startX = 0
-
-    for (percent, color) in zip(hist, centroids):
-        endX = startX + (percent * 300)
-        cv.rectangle(bar, (int(startX), 0), (int(endX), 50), color.astype("uint8").tolist(), -1)
-        startX = endX
-
-    return bar, color, percent
 
 if __name__ == '__main__':
     app.run()
