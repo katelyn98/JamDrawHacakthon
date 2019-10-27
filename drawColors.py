@@ -4,6 +4,8 @@ from collections import deque
 import copy
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+from pathlib import Path
+import pandas as pd
 
 cap = cv.VideoCapture(0)
 
@@ -150,8 +152,7 @@ while(1):
 
                 drawing = cv.imread('jamDrawImg.jpg')
                 drawing = drawing[90:390, 0:700]
-                #cv.imwrite('cropped.jpg', crop_img)
-                #cv.imshow("cropped", crop_img)
+             
                 drawing = cv.cvtColor(drawing, cv.COLOR_BGR2RGB)
 
                 drawing = drawing.reshape((drawing.shape[0] * drawing.shape[1], 3))
@@ -161,11 +162,6 @@ while(1):
                 hist = find_histogram(clt)
                 bar, color, percent = plot_colors2(hist, clt.cluster_centers_)
 
-                #print(colors[0])
-                #print(colors[1])
-                #print(colors[2])
-
-                #print(hist)
 
                 val1 = hist[0]
                 val2 = hist[1]
@@ -176,10 +172,34 @@ while(1):
                 a2 = (val1 + val2 + val3) - a1 - a3
 
                 ranks = ([a1, a2, a3])
-                #print(ranks)
+
+                tempo = ranks[0]
+                valence = ranks[1]
+                dance = ranks[2]  
+
+                print(dance)
+
+                upperDance = dance + 0.002
+                lowerDance = dance - 0.002  
+
+                upperValence = valence + 0.002
+                lowerValence = valence - 0.002
+
+                upperTempo = (tempo * 1000) + 10
+                lowerTempo = (tempo * 1000) - 10
+
+                data_path = Path('.') / 'Data'
+                data_files = list(data_path.glob("*.xlsx"))
+
+                file = data_files[0]
+                df = pd.read_excel(str(file))
+
+                df_dance = df[(df.danceability >= lowerDance) & (df.danceability <= upperDance)]
+                
+                print(df_dance[0:1])
 
                 plt.axis("off")
-                plt.imshow("Song Attributes", bar)
+                plt.imshow(bar)
                 plt.show()
 
         else:
@@ -211,8 +231,6 @@ while(1):
 
 
     cv.imshow("Frame", frame)
-    #cv.imshow("hsv", hsv)
-    #cv.imshow("Mask", mask)
 
     k = cv.waitKey(5) & 0xff
 
