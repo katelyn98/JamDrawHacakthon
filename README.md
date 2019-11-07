@@ -2,6 +2,7 @@
 ### JamDraw - using computer vision, machine learning, and data science
 
 ---
+' Visual Demonstration coming soon '
 
 We created a web application that takes your stories (drawings) and generates a song based off the percentage of a dominant color in your drawing. 
 
