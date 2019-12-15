@@ -23,7 +23,7 @@ def json():
     return render_template('json.html')
 
 # //background process happening without any refreshing
-@app.route('/main')
+@app.route('/background_process_test')
 def main():
     print("Starting")
     isRecording = True
