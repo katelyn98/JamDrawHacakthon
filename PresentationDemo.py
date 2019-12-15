@@ -229,11 +229,6 @@ while(1):
                 data_path = Path('.') / 'Data'
                 data_files = list(data_path.glob("*.xlsx"))
 
-                data_pathMood = Path('.') / 'SecondData'
-                data_filesMood = list(data_pathMood.glob("*.xlsx"))
-
-                fileMood = data_filesMood[0]
-                dfMood = pd.read_excel(str(fileMood))
 
                 file = data_files[0]
                 df = pd.read_excel(str(file))
