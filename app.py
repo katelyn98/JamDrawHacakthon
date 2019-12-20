@@ -1,7 +1,6 @@
 import cv2 as cv
 import numpy as np
 from collections import deque
-import copy
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from pathlib import Path
@@ -30,11 +29,12 @@ def main():
 
     cap = cv.VideoCapture(0)
 
-    #red, orange, yellow, green, blue, purple, pink
-    #i have RGB
-    #it goes BGR
-    #colors = [(38, 38, 255)]
-    colors = [(38, 38, 255), (19, 148, 249), (17, 250, 250), (17, 250, 48), (255, 207, 47), (255, 47, 165), (248, 107, 253)]
+    # red, orange, yellow, green, blue, purple, pink
+    # i have RGB
+    # it goes BGR
+    # colors = [(38, 38, 255)]
+    colors = [(38, 38, 255), (19, 148, 249), (17, 250, 250), (17, 250, 48), (255, 207, 47), (255, 47, 165),
+              (248, 107, 253)]
     colorIndx = 0
 
     redPts = [deque(maxlen=1000)]
@@ -60,22 +60,23 @@ def main():
 
         return hist
 
-
     def plot_colors2(hist, centroids):
         bar = np.zeros((50, 300, 3), dtype="uint8")
         startX = 0
 
-        for(percent, color) in zip(hist, centroids):
+        for (percent, color) in zip(hist, centroids):
             endX = startX + (percent * 300)
             cv.rectangle(bar, (int(startX), 0), (int(endX), 50), color.astype("uint8").tolist(), -1)
             startX = endX
 
         return bar, color, percent
 
-
-    while(isRecording):
+    while (isRecording):
 
         _, frame = cap.read()
+        jamDraw = frame.copy()
+        blackImg = np.zeros((512, 512, 3), np.uint8)
+        flippedIMG = cv.flip(frame, 0)
         hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
         lowerRed = np.array([90, 100, 100])
@@ -86,44 +87,46 @@ def main():
         kernel = np.ones((5, 5), np.uint8)
         dilate = cv.dilate(mask, kernel, iterations=2)
 
-        _, thresh = cv.threshold(dilate, 15, 275, cv.THRESH_BINARY)
+        ret, thresh = cv.threshold(dilate, 15, 275, cv.THRESH_BINARY)
 
-        contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        #parameters: input, contours to be passed in, draw all contours (-1) or index to a specific one, color, thickness
+        contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        # parameters: input, contours to be passed in, draw all contours (-1) or index to a specific one, color, thickness
         img = cv.drawContours(frame, contours, -1, (0, 255, 0), 3)
         center = None
-        #img2 = ""
-        
-        #drawing the colors to choose from
+        img2 = None
+
+        # drawing the colors to choose from
         points = [redPts, orangePts, yellowPts, greenPts, bluePts, purplePts]
         for i in range(len(points)):
             for j in range(len(points[i])):
                 for k in range(1, len(points[i][j])):
-                    if points[i][j][k-1] is None or points[i][j][k] is None:
+                    if points[i][j][k - 1] is None or points[i][j][k] is None:
                         continue
                     img2 = cv.line(frame, points[i][j][k - 1], points[i][j][k], colors[i], 23)
 
-        #clear
+        # clear
         img = cv.rectangle(frame, (0, 60), (80, 90), (255, 255, 255), -1)
-        #red
+        # red
         img = cv.rectangle(frame, (80, 60), (160, 90), colors[0], -1)
-        #orange
+        # orange
         img = cv.rectangle(frame, (160, 60), (240, 90), colors[1], -1)
-        #yellow
+        # yellow
         img = cv.rectangle(frame, (240, 60), (320, 90), colors[2], -1)
-        #green
+        # green
         img = cv.rectangle(frame, (320, 60), (400, 90), colors[3], -1)
-        #blue
+        # blue
         img = cv.rectangle(frame, (400, 60), (480, 90), colors[4], -1)
-        #purple
+        # purple
         img = cv.rectangle(frame, (480, 60), (560, 90), colors[5], -1)
-        #take picture
+        # take picture
         img = cv.rectangle(frame, (570, 390), (650, 420), (255, 255, 255), -1)
+
+        # img = cv.putText(frame, "Picture", (580, 410), cv.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 0), 3, cv.LINE_AA)
 
         if len(contours) > 0:
 
             M = cv.moments(thresh)
-    
+
             if (M['m00'] > 0):
 
                 # calculate x,y coordinate of center
@@ -166,12 +169,11 @@ def main():
                     colorIndx = 5
             elif center[1] >= 390:
                 if center[0] >= 570:
-
                     cv.imwrite('jamDrawImg.jpg', img2)
 
                     drawing = cv.imread('jamDrawImg.jpg')
                     drawing = drawing[90:390, 0:700]
-                
+
                     drawing = cv.cvtColor(drawing, cv.COLOR_BGR2RGB)
 
                     drawing = drawing.reshape((drawing.shape[0] * drawing.shape[1], 3))
@@ -179,8 +181,7 @@ def main():
                     clt.fit(drawing)
 
                     hist = find_histogram(clt)
-                    bar, _, _ = plot_colors2(hist, clt.cluster_centers_)
-
+                    bar, color, percent = plot_colors2(hist, clt.cluster_centers_)
 
                     val1 = hist[0]
                     val2 = hist[1]
@@ -192,20 +193,20 @@ def main():
 
                     ranks = ([a1, a2, a3])
 
-                    #tempo = ranks[0]
-                    #valence = ranks[1]
-                    dance = ranks[2]  
+                    tempo = ranks[0]
+                    valence = ranks[1]
+                    dance = ranks[2]
 
                     print(dance)
 
                     upperDance = dance + 0.002
-                    lowerDance = dance - 0.002  
+                    lowerDance = dance - 0.002
 
-                    #upperValence = valence + 0.002
-                    #lowerValence = valence - 0.002
+                    upperValence = valence + 0.002
+                    lowerValence = valence - 0.002
 
-                    #upperTempo = (tempo * 1000) + 10
-                    #lowerTempo = (tempo * 1000) - 10
+                    upperTempo = (tempo * 1000) + 10
+                    lowerTempo = (tempo * 1000) - 10
 
                     data_path = Path('.') / 'Data'
                     data_files = list(data_path.glob("*.xlsx"))
@@ -214,12 +215,19 @@ def main():
                     df = pd.read_excel(str(file))
 
                     df_dance = df[(df.danceability >= lowerDance) & (df.danceability <= upperDance)]
-                    
-                    print(df_dance[0:1])
+
+                    finalSong_df = df_dance[0:1]
+                    song_title = finalSong_df['title']
+                    artist = finalSong_df['artist']
+                    danceDataVal = finalSong_df['danceability']
+
+                    print(song_title, artist, danceDataVal)
 
                     plt.axis("off")
                     plt.imshow(bar)
                     plt.show()
+
+                    break
 
             else:
                 if colorIndx == 0:
@@ -248,7 +256,6 @@ def main():
             purplePts.append(deque(maxlen=1000))
             purpleIndx += 1
 
-
         cv.imshow("Frame", frame)
 
         k = cv.waitKey(5) & 0xff
@@ -256,7 +263,7 @@ def main():
         if k == 27:
             break
 
-    cv.destroyAllWindows()        
+    cv.destroyAllWindows()
 
 
 if __name__ == '__main__':
