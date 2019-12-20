@@ -67,8 +67,12 @@ while(1):
     #lowerRed = np.array([90, 100, 100])
     #upperRed = np.array([100, 255, 255])
 
-    lowerRed = np.array([145, 100, 100])
-    upperRed = np.array([175, 255, 255])
+    #lowerRed = np.array([145, 100, 100])
+    #upperRed = np.array([175, 255, 255])
+
+    #green pen from hotel
+    lowerRed = np.array([55, 75, 75])
+    upperRed = np.array([75, 255, 255])
 
     mask = cv2.inRange(hsv, lowerRed, upperRed)
 
@@ -211,11 +215,18 @@ while(1):
                 val2 = hist[1]
                 val3 = hist[2]
 
-                a1 = min(val1, val2, val3)
-                a3 = max(val1, val2, val3)
-                a2 = (val1 + val2 + val3) - a1 - a3
+                #a1 = min(val1, val2, val3)
+                #a3 = max(val1, val2, val3)
+                #a2 = (val1 + val2 + val3) - a1 - a3
 
-                ranks = ([a1, a2, a3])
+                #ranks = ([a1, a2, a3])
+                ranksToSort = [val1, val2, val3]
+
+                ranks = sorted(ranksToSort)
+
+                print('lowest val ' + str(ranks[0]))
+                print('middle val ' + str(ranks[1]))
+                print('largest val ' + str(ranks[2]))
 
                 tempo = ranks[0]
                 valence = ranks[1]
