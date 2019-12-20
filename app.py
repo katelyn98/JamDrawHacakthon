@@ -79,8 +79,12 @@ def main():
         flippedIMG = cv.flip(frame, 0)
         hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
-        lowerRed = np.array([90, 100, 100])
-        upperRed = np.array([100, 255, 255])
+        #lowerRed = np.array([90, 100, 100])
+        #upperRed = np.array([100, 255, 255])
+
+        #green pen from hotel
+        lowerRed = np.array([55, 75, 75])
+        upperRed = np.array([75, 255, 255])
 
         mask = cv.inRange(hsv, lowerRed, upperRed)
 
@@ -103,7 +107,8 @@ def main():
                     if points[i][j][k - 1] is None or points[i][j][k] is None:
                         continue
                     img2 = cv.line(frame, points[i][j][k - 1], points[i][j][k], colors[i], 23)
-
+        
+        
         # clear
         img = cv.rectangle(frame, (0, 60), (80, 90), (255, 255, 255), -1)
         # red
@@ -187,17 +192,25 @@ def main():
                     val2 = hist[1]
                     val3 = hist[2]
 
-                    a1 = min(val1, val2, val3)
-                    a3 = max(val1, val2, val3)
-                    a2 = (val1 + val2 + val3) - a1 - a3
+                    #a1 = min(val1, val2, val3)
+                    #a3 = max(val1, val2, val3)
+                    #a2 = (val1 + val2 + val3) - a1 - a3
 
-                    ranks = ([a1, a2, a3])
+                    #ranks = ([a1, a2, a3])
+
+                    ranksToSort = [val1, val2, val3]
+
+                    ranks = sorted(ranksToSort)
+
+                    print('lowest val ' + str(ranks[0]))
+                    print('middle val ' + str(ranks[1]))
+                    print('largest val ' + str(ranks[2]))
 
                     tempo = ranks[0]
                     valence = ranks[1]
-                    dance = ranks[2]
+                    dance = ranks[2]  
 
-                    print(dance)
+                    print('danceability: ' + str(dance))
 
                     upperDance = dance + 0.002
                     lowerDance = dance - 0.002
